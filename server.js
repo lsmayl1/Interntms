@@ -15,9 +15,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 
 // CORS configuration
-app.use(cors({
-  origin: "http://localhost:5173", // Allow requests from this origin
-}));
+app.use(cors());
 
 // Serve static files from the "uploads" directory
 app.use("/uploads", express.static("uploads"));
@@ -41,6 +39,6 @@ app.use("/test", testRoutes); // Use the test routes
 app.use(errorHandler);
 
 // Start the server
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
