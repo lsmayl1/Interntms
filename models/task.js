@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/config");
 const Intern = require("./intern");
-
+const Category = require("./category");
 const Task = sequelize.define(
   "Task",
   {
@@ -31,7 +31,7 @@ const Task = sequelize.define(
       type: DataTypes.STRING(20),
       defaultValue: "pending",
       validate: {
-        isIn: [["To_do", "in_progress", "Done"]],
+        isIn: [["To_do", "in_progress", "Done", "pending"]],
       },
     },
     due_date: {
@@ -45,6 +45,14 @@ const Task = sequelize.define(
         isIn: [["Low", "Medium", "High"]],
       },
     },
+    category_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Category,
+        key: "id",
+      },
+    },
   },
   {
     timestamps: true,
@@ -52,7 +60,9 @@ const Task = sequelize.define(
 );
 
 // Establish relationships
-Intern.hasMany(Task, { foreignKey: "intern_id" });
-Task.belongsTo(Intern, { foreignKey: "intern_id" });
+Intern.hasMany(Task, { foreignKey: "intern_id", as: "assigned_to" });
+Task.belongsTo(Intern, { foreignKey: "intern_id", as: "assigned_to" });
 
+Category.hasMany(Task, { foreignKey: "category_id", as: "category" });
+Task.belongsTo(Category, { foreignKey: "category_id", as: "category" });
 module.exports = Task;

@@ -1,9 +1,7 @@
 const { Intern, Task } = require("../models/index");
 const bcrypt = require("bcryptjs");
 
-const getAvatarUrl = (avatarPath) => {
-  return avatarPath ? `http://localhost:3000/${avatarPath}` : null;
-};
+
 
 const getAllInterns = async (req, res) => {
   try {
@@ -18,7 +16,7 @@ const getAllInterns = async (req, res) => {
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar: getAvatarUrl(intern.avatar), // Include the full avatar URL
+      avatar:intern.avatar, // Include the full avatar URL
     }));
     res.status(200).json(internsWithDetails);
   } catch (error) {
@@ -196,7 +194,9 @@ const updateUserData = async (req, res) => {
 
   const intern_id = req.user.id;
   const { username, first_name, last_name, email, phone, status } = req.body; // Güncellenebilir alanlar
-  const avatar = req.file ? req.file.path : null; // Dosya yükleme
+  const avatar = req.file
+    ? `http://localhost:3000/${req.file.path}`
+    : `http://localhost:3000/uploads/profile.png`; // Dosya yükleme
   console.log("Request Body:", req.body);
   console.log("Uploaded File:", req.file);
 

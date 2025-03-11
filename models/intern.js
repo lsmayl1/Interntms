@@ -39,13 +39,14 @@ const Intern = sequelize.define(
         isIn: [["active", "inactive", "completed"]],
       },
     },
-    bio:{
-      type:DataTypes.STRING,
-      allowNull:true,
+    bio: {
+      type: DataTypes.STRING,
+      allowNull: true,
     },
     avatar: {
       type: DataTypes.STRING,
       allowNull: true,
+      defaultValue: "http://localhost:3000/uploads/profile.png",
     },
     password: {
       type: DataTypes.STRING,

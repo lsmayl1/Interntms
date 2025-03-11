@@ -1,5 +1,4 @@
-const { Task } = require("../models/index");
-const { Intern } = require("../models/index");
+const { Task, Category, Intern } = require("../models/index");
 
 // Get all tasks for a specific intern
 const getTasksByInternId = async (req, res) => {
@@ -15,25 +14,68 @@ const getTasksByInternId = async (req, res) => {
 
 // Create a new task for an intern
 const createTask = async (req, res) => {
-  const { title, description, status, due_date, priority, assignto } = req.body;
+  const { title, description, due_date, priority, assignto, category_id } =
+    req.body;
 
-  console.log("Request Body:", req.body); // Log the request body
+    
 
-  // Check if the user is authenticated and has a valid token
+  console.log("Request Body:", req.body);
+
   if (!req.user || !req.user.id) {
     return res.status(401).json({ error: "User not authenticated." });
   }
 
+  if (
+    !title ||
+    !description ||
+    !due_date ||
+    !priority ||
+    !assignto ||
+    !category_id
+  ) {
+    return res.status(400).json({ error: "All fields are required." });
+  }
   try {
+    const [user, category] = await Promise.all([
+      Intern.findByPk(assignto),
+      Category.findByPk(category_id),
+    ]);
+
+    if (!user) {
+      return res.status(404).json({ error: "Assigned intern not found." });
+    }
+
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
     const task = await Task.create({
       title,
       description,
-      status,
       due_date,
       priority,
-      intern_id: assignto, // Use the intern_id from the token
+      intern_id: assignto,
+      category_id: category_id,
     });
-    return res.status(201).json(task);
+
+    task.intern = { id: user.id, username: user.username, avatar: user.avatar }; // Assuming 'name' is a field in the Intern model
+
+    task.category = {
+      id: category.id,
+      name: category.name,
+      color: category.color,
+    };
+
+    return res.status(201).json({
+      task: {
+        title: task.title,
+        description: task.description,
+        due_date: task.due_date,
+        priority: task.priority,
+        assigntoW: task.intern,
+        category: task.category,
+      },
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -48,13 +90,29 @@ const getTaskById = async (req, res) => {
         {
           model: Intern,
           attributes: ["id", "username", "avatar"],
+          as: "assigned_to",
+        },
+        {
+          model: Category,
+          attributes: ["id", "name", "color"],
+          as: "category",
         },
       ],
     });
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
-    res.status(200).json(task);
+    res.status(200).json({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      status: task.status,
+      assigned_to: task.assigned_to,
+      category: task.category,
+      due_date: task.due_date,
+      createdAt: task.createdAt,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -64,74 +122,93 @@ const getTaskById = async (req, res) => {
 // Update a task by ID
 const updateTask = async (req, res) => {
   const { id } = req.params;
-  const { title, description, status, due_date, priority, intern_id } =
-    req.body;
+  const {
+    title,
+    description,
+    status,
+    due_date,
+    priority,
+    intern_id,
+    category_id,
+  } = req.body;
 
   try {
+    // Task'ı ilk bulma ve kontrol
     const task = await Task.findByPk(id, {
-      include: {
-        model: Intern,
-        attributes: ["id", "first_name", "avatar"], // Intern için sadece gerekli alanları seçiyoruz
-      },
+      include: [
+        {
+          model: Intern,
+          attributes: ["id", "first_name", "avatar"],
+          as: "assigned_to",
+        },
+        {
+          model: Category,
+          attributes: ["id", "name", "color"],
+          as: "category",
+        },
+      ],
     });
 
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
 
-    // Eğer intern_id değişiyorsa, geçerli olup olmadığını kontrol et
-    if (intern_id) {
-      const intern = await Intern.findByPk(intern_id);
-      if (!intern) {
-        return res.status(400).json({ error: "Invalid Intern ID" });
-      }
-    }
-
-    // Görevi güncelle
-    await task.update({
+    // Intern_id kontrolü ve güncelleme verilerini hazırla
+    const updateData = {
       title,
       description,
       status,
       due_date,
       priority,
-      intern_id: intern_id || task.intern_id, // Eğer intern_id varsa güncelle, yoksa eskisini koru
+      category_id,
+      intern_id: task.intern_id, // Varsayılan olarak mevcut intern_id
+    };
+
+    if (intern_id && intern_id !== task.intern_id) {
+      const intern = await Intern.findByPk(intern_id);
+      if (!intern) {
+        return res.status(400).json({ error: "Invalid Intern ID" });
+      }
+      updateData.intern_id = intern_id;
+    }
+
+    // Görevi güncelle
+    await task.update(updateData);
+
+    // Güncellenmiş veriyi tek bir sorguda al
+    const updatedTask = await Task.findByPk(id, {
+      include: [
+        {
+          model: Intern,
+          attributes: ["id", "first_name", "avatar"], // username yerine first_name kullanıldı
+          as: "assigned_to",
+        },
+        {
+          model: Category,
+          attributes: ["id", "name", "color"],
+          as: "category",
+        },
+      ],
+      attributes: { exclude: ["intern_id", "category_id"] }, // intern_id'yi direkt burada hariç tutabiliriz
     });
 
-    // Güncellenmiş task verisini tekrar yükle
-    await task.reload({
-      include: {
-        model: Intern,
-        attributes: ["id", "username", "avatar"],
-      },
-    });
-
-    // intern_id'yi silerek yanıtı döndür
-    const taskWithoutInternId = { ...task.get(), intern_id: undefined };
-
-    res.status(200).json(taskWithoutInternId);
+    res.status(200).json(updatedTask);
   } catch (error) {
-    console.error(error);
+    console.error("Task update error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 // Delete a task by ID
 const deleteTask = async (req, res) => {
-  const { taskId } = req.params;
+  const { id } = req.params;
   try {
-    const task = await Task.findByPk(taskId, {
-      include: [
-        {
-          model: Intern,
-          attributes: ["id", "username", "avatar"],
-        },
-      ],
-    });
+    const task = await Task.findByPk(id);
     if (!task) {
       return res.status(404).json({ error: "Task not found" });
     }
     await task.destroy();
-    res.status(204).send();
+    res.status(204).end();
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -144,11 +221,18 @@ const getAllTasks = async (req, res) => {
     const tasks = await Task.findAll({
       include: [
         {
-          model: Intern,
+          model: Intern, // alias KULLANMADAN
           attributes: ["id", "username", "avatar"],
+          as: "assigned_to",
+        },
+        {
+          model: Category, // alias KULLANMADAN
+          attributes: ["id", "name", "color"],
+          as: "category",
         },
       ],
     });
+
     res.status(200).json(tasks);
   } catch (error) {
     console.error(error);
@@ -176,6 +260,16 @@ const getUserData = async (req, res) => {
   }
 };
 
+const SaveImg = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "Image not uploaded" });
+  }
+  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
+    req.file.filename
+  }`;
+  res.json({ url: fileUrl });
+};
+
 module.exports = {
   getTasksByInternId,
   createTask,
@@ -183,5 +277,6 @@ module.exports = {
   updateTask,
   deleteTask,
   getAllTasks,
+  SaveImg,
   getUserData,
 };

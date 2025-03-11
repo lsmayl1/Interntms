@@ -1,14 +1,15 @@
-const sequelize = require('../config/config');
-const Intern = require('./intern');
-const Task = require('./task');
-
+const sequelize = require("../config/config");
+const Intern = require("./intern");
+const Task = require("./task");
+const Category = require("./category");
 // Sync models with the database
 const syncDatabase = async () => {
-    await sequelize.sync({ alter: true });
+  await sequelize.sync({ alter: true });
 };
 
 module.exports = {
-    syncDatabase,
-    Intern,
-    Task,
-}; 
+  syncDatabase,
+  Intern,
+  Task,
+  Category,
+};

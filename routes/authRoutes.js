@@ -36,6 +36,7 @@ router.post("/register", async (req, res) => {
       status: "active",
       password: hashedPassword, // Store the hashed password
       role: "User", // Set default role to 'User'
+      avatar: "http://localhost:3000/uploads/profile.png",
     });
 
     // Respond with the newly created intern (excluding the password)
@@ -48,6 +49,7 @@ router.post("/register", async (req, res) => {
       phone: newIntern.phone,
       status: newIntern.status,
       role: newIntern.role,
+      avatar: newIntern.avatar,
     });
   } catch (error) {
     console.error(error);
@@ -71,7 +73,7 @@ router.post("/login", async (req, res) => {
     const accessToken = jwt.sign(
       { id: intern.id, role: intern.role }, // role ekledik
       JWT_SECRET,
-      { expiresIn: "15m" }
+      { expiresIn: "1D" }
     );
 
     const refreshToken = jwt.sign(
@@ -106,9 +108,11 @@ router.post("/refresh", async (req, res) => {
 
     jwt.verify(token, REFRESH_TOKEN_SECRET, (err, user) => {
       if (err) return res.sendStatus(403); // Forbidden
-      const accessToken = jwt.sign({ intern_id: user.intern_id }, JWT_SECRET, {
-        expiresIn: "15m",
-      }); // Create a new access token
+      const accessToken = jwt.sign(
+        { id: user.id, role: intern.role }, // id ve role ekledik
+        JWT_SECRET,
+        { expiresIn: "1D" } // Doğru zaman formatı
+      );
       res.json({ accessToken });
     });
   } catch (error) {

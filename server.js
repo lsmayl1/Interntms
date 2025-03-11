@@ -4,6 +4,7 @@ const { syncDatabase } = require("./models/index");
 const internRoutes = require("./routes/internRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const authRoutes = require("./routes/authRoutes");
+const categoriesRoutes = require("./routes/categoriesRoutes");
 const testRoutes = require("./routes/testRoutes"); // Import the test routes
 const errorHandler = require("./middleware/errorMiddleware"); // Import the error handling middleware
 require("dotenv").config(); // Load environment variables from .env file
@@ -33,6 +34,7 @@ syncDatabase()
 app.use("/interns", internRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/auth", authRoutes);
+app.use("/categories", categoriesRoutes);
 app.use("/test", testRoutes); // Use the test routes
 
 // Use the error handling middleware
