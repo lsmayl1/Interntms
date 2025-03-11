@@ -31,7 +31,7 @@ const upload = multer({ storage }); // Use the custom storage configuration
 // Protect the route with authMiddleware and isAdmin
 router.get("/", authMiddleware, getAllInterns);
 router.get("/me", authMiddleware, getUserData);
-router.post("/", upload.single("avatar"), authMiddleware, createIntern);
+router.post("/", authMiddleware, createIntern);
 router.put("/me/edit", upload.single("avatar"), authMiddleware, updateUserData);
 
 router.get("/:id", authMiddleware, getInternById);

@@ -1,7 +1,7 @@
 const { Intern, Task } = require("../models/index");
 const bcrypt = require("bcryptjs");
 
-
+const SERVER_URL = process.env.SERVER_URL;
 
 const getAllInterns = async (req, res) => {
   try {
@@ -16,7 +16,7 @@ const getAllInterns = async (req, res) => {
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar:intern.avatar, // Include the full avatar URL
+      avatar: intern.avatar, // Include the full avatar URL
     }));
     res.status(200).json(internsWithDetails);
   } catch (error) {
@@ -112,8 +112,6 @@ const updateIntern = async (req, res) => {
       avatar,
     });
 
-    const avatarUrl = avatar ? `http://localhost:3000/${avatar}` : null;
-
     res.status(200).json({
       id: intern.id,
       first_name: intern.first_name,
@@ -193,15 +191,14 @@ const updateUserData = async (req, res) => {
   }
 
   const intern_id = req.user.id;
-  const { username, first_name, last_name, email, phone, status } = req.body; // Güncellenebilir alanlar
+  const { username, first_name, last_name, email, phone, status } = req.body;
   const avatar = req.file
-    ? `http://localhost:3000/${req.file.path}`
-    : `http://localhost:3000/uploads/profile.png`; // Dosya yükleme
+    ? `${SERVER_URL}/${req.file.path}`
+    : `${SERVER_URL}/uploads/profile.png`; // Dosya yükleme
   console.log("Request Body:", req.body);
   console.log("Uploaded File:", req.file);
 
   try {
-    // Kullanıcıyı bul
     const intern = await Intern.findByPk(intern_id);
 
     if (!intern) {
