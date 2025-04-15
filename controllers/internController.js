@@ -16,7 +16,7 @@ const getAllInterns = async (req, res) => {
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar: intern.avatar, // Include the full avatar URL
+      avatar: `${SERVER_URL + intern.avatar}`, // Assuming this is the avatar URL field
     }));
     res.status(200).json(internsWithDetails);
   } catch (error) {
@@ -86,7 +86,7 @@ const getInternById = async (req, res) => {
 const updateIntern = async (req, res) => {
   const { id } = req.params;
   const { first_name, last_name, email, phone, status, role } = req.body;
-  const avatar = req.file ? req.file.path : null;
+  const avatar = req.file ? req.file.path : "/uploads/profile.png";
 
   try {
     const intern = await Intern.findByPk(id);
@@ -120,7 +120,7 @@ const updateIntern = async (req, res) => {
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar: avatarUrl,
+      avatar: avatar,
     });
   } catch (error) {
     console.error("Error updating intern:", error);
@@ -170,13 +170,14 @@ const getUserData = async (req, res) => {
     // Combine the data and send the response
     res.status(200).json({
       id: intern.id,
+      username: intern.username,
       first_name: intern.first_name,
       last_name: intern.last_name,
       email: intern.email,
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar: intern.avatar, // Assuming this is the avatar URL field
+      avatar: intern.avatar,
       tasks: assignedTasks, // Add the tasks array here
     });
   } catch (error) {
@@ -192,9 +193,7 @@ const updateUserData = async (req, res) => {
 
   const intern_id = req.user.id;
   const { username, first_name, last_name, email, phone, status } = req.body;
-  const avatar = req.file
-    ? `${SERVER_URL}/${req.file.path}`
-    : `${SERVER_URL}/uploads/profile.png`; // Dosya yükleme
+  const avatar = req.file ? `${req.file.path}` : `/uploads/profile.png`; // Dosya yükleme
   console.log("Request Body:", req.body);
   console.log("Uploaded File:", req.file);
 

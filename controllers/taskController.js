@@ -1,5 +1,5 @@
 const { Task, Category, Intern } = require("../models/index");
-
+const SERVER_URL = process.env.SERVER_URL;
 // Get all tasks for a specific intern
 const getTasksByInternId = async (req, res) => {
   const { internId } = req.params;
@@ -16,8 +16,6 @@ const getTasksByInternId = async (req, res) => {
 const createTask = async (req, res) => {
   const { title, description, due_date, priority, assignto, category_id } =
     req.body;
-
-    
 
   console.log("Request Body:", req.body);
 
@@ -264,9 +262,7 @@ const SaveImg = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "Image not uploaded" });
   }
-  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${
-    req.file.filename
-  }`;
+  const fileUrl = `/uploads/${req.file.filename}`;
   res.json({ url: fileUrl });
 };
 
