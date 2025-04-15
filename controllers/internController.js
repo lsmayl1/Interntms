@@ -16,7 +16,7 @@ const getAllInterns = async (req, res) => {
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar: `${SERVER_URL + intern.avatar}`, // Assuming this is the avatar URL field
+      avatar: intern.avatar, // Assuming this is the avatar URL field
     }));
     res.status(200).json(internsWithDetails);
   } catch (error) {
@@ -69,13 +69,14 @@ const getInternById = async (req, res) => {
 
     res.status(200).json({
       id: intern.id,
+      username: intern.username,
       first_name: intern.first_name,
       last_name: intern.last_name,
       email: intern.email,
       phone: intern.phone,
       status: intern.status,
       role: intern.role,
-      avatar: getAvatarUrl(intern.avatar), // Include the full avatar URL
+      avatar: intern.avatar,
     });
   } catch (error) {
     console.error(error);
